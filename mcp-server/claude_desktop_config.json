@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "modexia": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/home/modaniels/Documents/MODEXIA/ModexiaAgentpay/apps/mcp-server",
+        "run",
+        "server.py"
+      ],
+      "env": {
+        "MODEXIA_API_KEY": "mx_test_YourApiKeyHere",
+        "MODEXIA_BASE_URL": "http://localhost:3001"
+      }
+    }
+  }
+}
