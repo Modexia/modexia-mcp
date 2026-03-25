@@ -1,80 +1,125 @@
-# Modexia AgentPay: Deep Context & Developer Guide
+<div align="center">
+  <h1>🏦 Modexia AgentPay MCP Server</h1>
+  <p><b>The official Model Context Protocol (MCP) server for autonomous AI Agents to interact with Modexia's crypto infrastructure.</b></p>
+  
+  [![PyPI version](https://badge.fury.io/py/modexia-mcp.svg)](https://badge.fury.io/py/modexia-mcp)
+  [![Python version](https://img.shields.io/pypi/pyversions/modexia-mcp.svg)](https://pypi.org/project/modexia-mcp/)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+</div>
 
-## 1. Introduction & Overview
-Modexia is a financial infrastructure layer built specifically for autonomous AI agents. It bridges Web2 authentication (Supabase) with Web3 Smart Contract Accounts (ERC-4337 on the Base Network). 
+<br />
 
-This allows an AI agent to programmatically control a non-custodial wallet and make fast, cheap payments (USDC) to other agents, services, or users without needing to manage complex crypto infrastructure directly.
+Welcome to the **Modexia MCP Server** (`modexia-mcp`). This server allows your AI agents (like Claude, LangChain bots, or custom swarms) to seamlessly execute secure cryptocurrency transactions (USDC) and zero-fee micro-payments straight from their system prompts.
 
-## 2. Architecture & Security Model
+By connecting this server to an MCP-compatible client, your AI Agent gains a programmatic wallet, enabling it to participate autonomously in the digital economy without requiring complex cryptography inside the LLM context.
 
-### 2.1 Current State: API Key & Managed Wallets
-Currently, ModexiaAgentpay prioritizes developer experience and simple integration. Agents interact with the protocol primarily through **API Keys**. The Modexia platform acts as a trusted facilitator that manages the underlying blockchain complexity on behalf of the agent.
+---
 
-#### Flow:
-1. **Developer Setup:** A developer registers on the Modexia platform and receives an API Key. Underlying this account is a Circle Developer-Controlled Wallet (managed by Modexia).
-2. **Channel Opening (On-Chain):** When the developer's agent needs to pay a provider, the backend (using the API Key for auth) triggers a transaction to lock USDC into the `ModexiaVault` smart contract.
-3. **Usage (Off-Chain):** The agent consumes the provider's API. The Modexia backend tracks the usage and the amount owed off-chain in its database.
-4. **Settlement:** When the consumption ends, the Modexia backend (acting on behalf of the agent) submits the final owed amount to the `ModexiaVault` contract via `settleChannel()`. The Vault distributes the USDC to the provider, takes a platform fee, and refunds the rest to the agent's wallet.
+## 🌟 Getting Started: Your API Key
 
-### 2.2 Future State: Trustless State Channels (EIP-712)
-Eventually, Modexia will upgrade to **Fully Trustless State Channels** using cryptographic signatures, where the agent environment manages its own private key and signs "Receipts" (micro-payments) off-chain, which the provider directly submits to the `ModexiaVault` contract.
+Before writing your first integration, you will need a Modexia developer account and an API key. 
 
-## 3. SDK Capabilities (Python)
-Currently, Modexia is interacted with via the Python SDK (`modexiaagentpay`).
+1. **Visit [modexia.software](https://modexia.software)**
+2. Create or log into your developer account.
+3. Navigate to your dashboard and generate your **API Key**.
 
-### Installation
-`pip install modexiaagentpay`
+---
 
-### Initialization
-Authentication and environment selection are handled via the API Key prefix:
-- `mx_test_...` -> Targets Sandbox (Base-Sepolia)
-- `mx_live_...` -> Targets Production (Base-Mainnet)
+## 🏗 System Architecture & Flow
 
-```python
-from modexia import create_client
-client = create_client(api_key="mx_test_...")
+This server acts as a secure, local bridge between your AI agent's reasoning engine and the Modexia blockchain network via the Python SDK.
+
+```mermaid
+sequenceDiagram
+    participant LLM as 🤖 AI Agent (Claude/Custom)
+    participant MCP as 🔌 Modexia MCP Server
+    participant SDK as 📦 Python SDK
+    participant API as 🌐 Modexia Network (Base L2)
+
+    LLM->>MCP: Prompt: "Transfer $5 to 0xAlice"
+    Note over MCP: Validates Intent &<br/>Injects MODEXIA_API_KEY
+    MCP->>SDK: sdk.transfer("0xAlice", 5.0)
+    SDK->>API: Execute Base Network USDC TX
+    API-->>SDK: Transaction Receipt (txHash)
+    SDK-->>MCP: Payment Receipt Object
+    MCP-->>LLM: Response: "Success! TxID: 0x123..."
+    LLM-->>User: "I have successfully sent $5 to Alice."
 ```
 
-### Core Operations
+---
 
-#### 1. Checking Balance
-Returns the available USDC balance of the Agent's Smart Contract Wallet.
-```python
-balance = client.retrieve_balance() # or client.get_balance()
-print(f"Balance: {balance} USDC")
+## 📦 Installation & Setup
+
+Because this server is deployed and maintained natively on **PyPI**, you do not need to clone the repository to use it. Your MCP-compatible client will automatically download and execute it in an isolated, secure environment via `uvx`.
+
+### Using Claude Desktop
+If you are using Anthropic's Claude Desktop App, simply add this configuration to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "modexia": {
+      "command": "uvx",
+      "args": ["modexia-mcp"],
+      "env": {
+        "MODEXIA_API_KEY": "mx_test_YourApiKeyHere"
+      }
+    }
+  }
+}
 ```
 
-#### 2. Direct Payment (Transfer Funds)
-Sends USDC to a specific wallet address. The platform charges a 1% fee on top of the amount.
-```python
-receipt = client.transfer(
-    recipient="0x7d5...",
-    amount=5.00,       # Amount in USDC (Decimal)
-    wait=True,         # Poll for blockchain finality (Recommended)
-    idempotency_key="task_123" # Optional: Prevent double-spend
-)
+> **Note on Environments:** 
+> If you do not specify a `MODEXIA_BASE_URL` in the `env` block, the server defaults to the **Sandbox (Testnet)**. To execute real money transactions in production, you must add `"MODEXIA_BASE_URL": "https://api.modexia.software"` and provide an `mx_live_` prefix key.
+
+---
+
+## ✨ Comprehensive Tool Reference
+
+Once connected, your AI Agent natively understands how to use all of the following capabilities. The LLM handles the logic and idempotency; the MCP handles the secure execution.
+
+### Standard Payments & Account Info
+- `get_balance()`: Fetches the current USDC balance of the Agent's Smart Contract Wallet. Agents use this as a pre-flight check.
+- `transfer(recipient, amount)`: Sends a standard Modexia payment (USDC) to the specified EVM-compatible address.
+- `get_history(limit=5)`: Allows the AI agent to introspect its own recent expenditures. Useful for contextual memory.
+
+### High-Frequency Vault Channels
+Vault channels allow your agent to execute thousands of micro-transactions per second with **zero gas fees** and **zero latency**.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Closed
+    Closed --> Open: open_channel() (Locks USDC deposit On-Chain)
+    Open --> Active: consume_channel() (Instant Off-Chain Micro-payment)
+    Active --> Active: consume_channel()
+    Active --> Settling: settle_channel()
+    Open --> Settling: settle_channel() (Refunds remaining)
+    Settling --> Closed: Final Payout On-Chain
 ```
 
-#### 3. Smart Fetch (x402 / Paywall Negotiation)
-A wrapper around HTTP GET. Automatically detects `402 Payment Required`, parses the `WWW-Authenticate` header for price/destination, pays the invoice via Modexia, and retries the request with a proof-of-payment header.
-```python
-# Automatically pays if status is 402
-response = client.smart_fetch("https://premium-api.com/data")
-```
+- `open_channel(provider_address, deposit_amount, duration_hours)`: Locks the requested deposit into a ModexiaVault smart contract. Returns a unique `channelId`.
+- `consume_channel(channel_id, amount)`: Executes an instant, cryptographically signed micro-payment inside the open channel. 
+- `settle_channel(channel_id)`: Closes the vault, distributes the final payout to the provider, and refunds the unused deposit back to the agent.
+- `get_channel(channel_id)`: Checks the remaining balance and expiration.
+- `list_channels(provider, status)`: Finds existing open channels to reuse.
 
-#### 4. Vault Channels (Micro-payments)
-For high-frequency or streaming capability:
-1. `client.open_channel(provider, depositAmount)` locks funds on-chain.
-2. `client.consume_channel(channelId, amount)` pays a small amount instantly via backend tracking.
-3. `client.settle_channel(channelId)` closes the channel and settles on-chain.
+### Autonomous API Negotiation
+#### `smart_fetch(url, ...)`
+This is the hallmark tool of the Modexia MCP. It allows an AI agent to fetch any external URL endpoint and automatically negotiate payments.
+1. The tool intercepts the HTTP `402 Payment Required`.
+2. Parses the `WWW-Authenticate` header to extract the requested invoice.
+3. Silently executes a Modexia payment to fulfill the invoice.
+4. Retries the original HTTP GET request with the cryptographic proof-of-payment.
+5. Returns the premium data directly to the LLM context.
 
-## 4. Building RAG & AI Agents with Modexia
-When building AI Agents using Modexia (especially with TS tools like Vercel AI SDK or MCP), the Agent needs precise context.
+---
 
-### RAG Integration
-If your agent receives a request to perform a payment, but needs to check policies or external constraints first, it should leverage Retrieval-Augmented Generation (RAG). By reading this documentation (often exposed via MCP resources), the AI can understand that a `transfer` must be provided a valid `0x...` string and a decimal amount.
+## 🔐 Security Model & Best Practices
+The Modexia MCP Server never exposes your private keys to the LLM context. The AI only has permission to trigger explicitly configured MCP tools. Policy limits (like maximum daily spend or hourly limits) can be enforced automatically on the Modexia backend, meaning even a hallucinating AI cannot drain your wallet above your predefined guards.
 
-### Best Practices for AI Integration
-- **Idempotency Keys:** Agents should ALWAYS generate a unique standard string (like a combination of the task ID and step) for the `idempotency_key` when calling payment features to avoid double-charging if the AI retries the action.
-- **Error Handling:** AI agents should be aware of `ModexiaPaymentError` (insufficient funds, limit exceeded) and `ModexiaAuthError`. If a 402 Error is received dynamically, agents can use the `smart_fetch` command or manually instruct the transfer command.
-- **Gas Fees:** The AI should know that it does NOT need ETH. Gas fees are sponsored by the Modexia Paymaster. Limits are purely enforced in USDC.
+---
+
+## 📄 License & Support
+**modexia-mcp** is an open-source tool governed by the [MIT License](LICENSE).
+
+Need help scaling your agent swarm? Reach out to our engineering team or explore the overarching protocol docs at [modexia.software](https://modexia.software).

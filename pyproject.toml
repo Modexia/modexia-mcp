@@ -4,9 +4,10 @@ build-backend = "hatchling.build"
 
 [project]
 name = "modexia-mcp"
-version = "0.1.0"
+version = "0.2.0"
 description = "Official Modexia AgentPay MCP Server"
 readme = "README.md"
+license = {file = "LICENSE"}
 requires-python = ">=3.10"
 dependencies = [
     "mcp>=1.26.0",
@@ -16,4 +17,7 @@ dependencies = [
 ]
 
 [project.scripts]
-modexia-mcp = "server:main"
+modexia-mcp = "modexia_mcp:main"
+
+[tool.hatch.build.targets.wheel.force-include]
+"modexia_mcp/modexia_context.md" = "modexia_mcp/modexia_context.md"

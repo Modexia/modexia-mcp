@@ -1,7 +1,6 @@
 import os
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
-from pydantic import BaseModel
 from typing import Optional
 import sys
 
@@ -11,13 +10,16 @@ try:
 except ImportError:
     ModexiaClient = None
 
-load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+load_dotenv()
 
-# We set up a FastMCP instance. FastMCP automatically creates tools/resources/prompts via decorators
+
 mcp_server = FastMCP(
     "ModexiaAgentpay",
     dependencies=["modexiaagentpay", "python-dotenv"]
 )
+
+def _sdk_call_failed(exc: Exception) -> dict:
+    return {"success": False, "status": "FAILED", "errorReason": str(exc)}
 
 def get_modexia_client():
     if ModexiaClient is None:
@@ -28,9 +30,6 @@ def get_modexia_client():
     if not api_key:
         raise ValueError("MODEXIA_API_KEY environment variable is missing. It must be provided (e.g. mx_test_...).")
     
-    import sys
-    print(f"🪲 [DEBUG] Running tool using base_url: {base_url}", file=sys.stderr)
-    
     # We pass base_url explicitly in case python-dotenv missed it or it wasn't exported globally
     return ModexiaClient(api_key=api_key, base_url=base_url)
 
@@ -40,8 +39,11 @@ def get_modexia_client():
 @mcp_server.tool()
 def get_balance() -> str:
     """Retrieve the current USDC wallet balance for the Agent's Smart Contract Wallet."""
-    client = get_modexia_client()
-    return client.retrieve_balance()
+    try:
+        client = get_modexia_client()
+        return client.retrieve_balance()
+    except Exception as e:
+        return f"Error: {e}"
 
 @mcp_server.tool()
 def transfer(recipient: str, amount: float, idempotency_key: Optional[str] = None) -> dict:
@@ -49,11 +51,12 @@ def transfer(recipient: str, amount: float, idempotency_key: Optional[str] = Non
     Send a standard Modexia payment (USDC) to a recipient.
     Recommended to always provide an idempotency_key to prevent double charges.
     """
-    client = get_modexia_client()
-    
+    if amount <= 0:
+        return {"success": False, "errorReason": "Amount must be strictly positive."}
+
     try:
+        client = get_modexia_client()
         receipt = client.transfer(recipient, amount, wait=True, idempotency_key=idempotency_key)
-        
         return {
             "success": receipt.success,
             "txId": getattr(receipt, "txId", None),
@@ -69,24 +72,30 @@ def transfer(recipient: str, amount: float, idempotency_key: Optional[str] = Non
             "message": "Transaction submitted successfully but is taking longer than usual to settle on the blockchain.",
             "errorReason": str(e)
         }
+    except Exception as e:
+        return _sdk_call_failed(e)
 
 @mcp_server.tool()
 def get_history(limit: int = 5) -> dict:
     """Fetch the recent transaction history for the authenticated agent."""
-    client = get_modexia_client()
-    resp = client.get_history(limit=limit)
-    return {
-        "transactions": [
-            {
-                "txId": getattr(t, "txId", ""), 
-                "amount": getattr(t, "amount", ""), 
-                "state": getattr(t, "state", ""), 
-                "providerAddress": getattr(t, "providerAddress", "")
-            }
-            for t in resp.transactions
-        ],
-        "hasMore": getattr(resp, "hasMore", False)
-    }
+    try:
+        client = get_modexia_client()
+        resp = client.get_history(limit=limit)
+        transactions = getattr(resp, "transactions", None) or []
+        return {
+            "transactions": [
+                {
+                    "txId": getattr(t, "txId", ""), 
+                    "amount": getattr(t, "amount", ""), 
+                    "state": getattr(t, "state", ""), 
+                    "providerAddress": getattr(t, "providerAddress", "")
+                }
+                for t in transactions
+            ],
+            "hasMore": getattr(resp, "hasMore", False)
+        }
+    except Exception as e:
+        return _sdk_call_failed(e)
 
 @mcp_server.tool()
 def open_channel(provider: str, deposit_amount: float, duration_hours: float = 24.0) -> dict:
@@ -94,8 +103,11 @@ def open_channel(provider: str, deposit_amount: float, duration_hours: float = 2
     Open a high-frequency micro-payment vault channel with on-chain deposit.
     Blocks funds for the specific provider, allowing instant, gas-free payments via `consume_channel`.
     """
-    client = get_modexia_client()
-    return client.open_channel(provider, deposit_amount, duration_hours)
+    try:
+        client = get_modexia_client()
+        return client.open_channel(provider, deposit_amount, duration_hours)
+    except Exception as e:
+        return _sdk_call_failed(e)
 
 @mcp_server.tool()
 def consume_channel(channel_id: str, amount: float, idempotency_key: Optional[str] = None) -> dict:
@@ -103,50 +115,68 @@ def consume_channel(channel_id: str, amount: float, idempotency_key: Optional[st
     Execute an instant, gas-free micro-payment inside an already open channel.
     Call this as many times as needed while the channel is open.
     """
-    client = get_modexia_client()
-    res = client.consume_channel(channel_id, amount, idempotency_key=idempotency_key)
-    return {
-        "success": getattr(res, "success", False),
-        "remaining": getattr(res, "remaining", "0"),
-        "isDuplicate": getattr(res, "isDuplicate", False)
-    }
+    if amount <= 0:
+        return {"success": False, "errorReason": "Amount must be strictly positive."}
+
+    try:
+        client = get_modexia_client()
+        res = client.consume_channel(channel_id, amount, idempotency_key=idempotency_key)
+        return {
+            "success": getattr(res, "success", False),
+            "remaining": getattr(res, "remaining", "0"),
+            "isDuplicate": getattr(res, "isDuplicate", False)
+        }
+    except Exception as e:
+        return _sdk_call_failed(e)
 
 @mcp_server.tool()
 def settle_channel(channel_id: str) -> dict:
     """Settle an open micro-payment channel, paying the provider, and refunding the remainder back to you."""
-    client = get_modexia_client()
-    return client.settle_channel(channel_id)
+    try:
+        client = get_modexia_client()
+        return client.settle_channel(channel_id)
+    except Exception as e:
+        return _sdk_call_failed(e)
 
 @mcp_server.tool()
 def get_channel(channel_id: str) -> dict:
     """Get the current status, deposit amount, and remaining balance of a specific payment channel."""
-    client = get_modexia_client()
-    status = client.get_channel(channel_id)
-    return {
-        "channelId": getattr(status, "channelId", channel_id),
-        "providerAddress": getattr(status, "providerAddress", ""),
-        "deposit": getattr(status, "deposit", "0"),
-        "remaining": getattr(status, "remaining", "0"),
-        "state": getattr(status, "state", ""),
-        "isExpired": getattr(status, "isExpired", False)
-    }
+    try:
+        client = get_modexia_client()
+        status = client.get_channel(channel_id)
+        return {
+            "channelId": getattr(status, "channelId", channel_id),
+            "providerAddress": getattr(status, "providerAddress", ""),
+            "deposit": getattr(status, "deposit", "0"),
+            "remaining": getattr(status, "remaining", "0"),
+            "state": getattr(status, "state", ""),
+            "isExpired": getattr(status, "isExpired", False)
+        }
+    except Exception as e:
+        return _sdk_call_failed(e)
 
 @mcp_server.tool()
 def list_channels(limit: int = 50) -> dict:
     """List all payment channels associated with the authenticated agent's wallet."""
-    client = get_modexia_client()
-    channels = client.list_channels(limit=limit)
-    return {
-        "channels": [
-            {
-                "channelId": getattr(c, "channelId", ""),
-                "providerAddress": getattr(c, "providerAddress", ""),
-                "deposit": getattr(c, "deposit", "0"),
-                "remaining": getattr(c, "remaining", "0"),
-                "state": getattr(c, "state", "")
-            } for c in channels
-        ]
-    }
+    try:
+        client = get_modexia_client()
+        raw = client.list_channels(limit=limit)
+        channel_list = getattr(raw, "channels", raw)
+        if channel_list is None:
+            channel_list = []
+        return {
+            "channels": [
+                {
+                    "channelId": getattr(c, "channelId", ""),
+                    "providerAddress": getattr(c, "providerAddress", ""),
+                    "deposit": getattr(c, "deposit", "0"),
+                    "remaining": getattr(c, "remaining", "0"),
+                    "state": getattr(c, "state", "")
+                } for c in channel_list
+            ]
+        }
+    except Exception as e:
+        return _sdk_call_failed(e)
 
 @mcp_server.tool()
 def smart_fetch(method: str, url: str) -> dict:
@@ -155,17 +185,20 @@ def smart_fetch(method: str, url: str) -> dict:
     and a WWW-Authenticate header, this tool will automatically negotiate and pay the invoice 
     via Modexia AgentPay, then retry the request with the cryptographic proof of payment.
     """
-    client = get_modexia_client()
-    resp = client.smart_fetch(method, url)
     try:
-        data = resp.json()
-    except Exception:
-        data = resp.text[:2000] # truncate pure text
-    
-    return {
-        "status_code": resp.status_code,
-        "data": data
-    }
+        client = get_modexia_client()
+        resp = client.smart_fetch(method, url)
+        try:
+            data = resp.json()
+        except Exception:
+            data = resp.text[:2000] # truncate pure text
+
+        return {
+            "status_code": resp.status_code,
+            "data": data
+        }
+    except Exception as e:
+        return _sdk_call_failed(e)
 
 # -----------------
 # RESOURCES
@@ -177,8 +210,8 @@ def get_modexia_context() -> str:
     how AI agents should execute payments, open channels, and handle 402 Paywalls.
     Always read this before performing complex financial operations on Modexia.
     """
-    # The absolute path to the context we created
-    file_path = "/home/modaniels/Documents/MODEXIA/ModexiaAgentpay/apps/web/public/llms.txt"
+    # Load the bundled context file relative to this module
+    file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "modexia_context.md")
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             return f.read()
@@ -214,7 +247,6 @@ def setup_microtransactions_instruction() -> str:
 
 
 def main():
-    import sys
     import os
     port = os.getenv("PORT")
 

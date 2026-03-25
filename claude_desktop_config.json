@@ -4,9 +4,9 @@
       "command": "uv",
       "args": [
         "--directory",
-        "/home/modaniels/Documents/MODEXIA/ModexiaAgentpay/apps/mcp-server",
+        "/home/modaniels/Documents/MODEXIA/modexia-mcp",
         "run",
-        "server.py"
+        "modexia-mcp"
       ],
       "env": {
         "MODEXIA_API_KEY": "mx_test_YourApiKeyHere",
