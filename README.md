@@ -1,8 +1,4 @@
----
-noteId: "e4328b102e1311f1acf145451b1d7949"
-tags: []
 
----
 
 <div align="center">
   <h1>🏦 Modexia AgentPay MCP Server</h1>
