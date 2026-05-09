@@ -44,15 +44,16 @@ def get_balance() -> str:
     return client.retrieve_balance()
 
 @mcp_server.tool()
-def transfer(recipient: str, amount: float, idempotency_key: Optional[str] = None) -> dict:
+def transfer(recipient: str, amount: float, idempotency_key: Optional[str] = None, memo: Optional[str] = None) -> dict:
     """
     Send a standard Modexia payment (USDC) to a recipient.
     Recommended to always provide an idempotency_key to prevent double charges.
+    Optionally provide a memo to explain the reason for the payment (visible in audit trail).
     """
     client = get_modexia_client()
     
     try:
-        receipt = client.transfer(recipient, amount, wait=True, idempotency_key=idempotency_key)
+        receipt = client.transfer(recipient, amount, wait=True, idempotency_key=idempotency_key, memo=memo)
         
         return {
             "success": receipt.success,
@@ -100,7 +101,8 @@ def get_history(limit: int = 5) -> dict:
                 "txId": getattr(t, "txId", ""), 
                 "amount": getattr(t, "amount", ""), 
                 "state": getattr(t, "state", ""), 
-                "providerAddress": getattr(t, "providerAddress", "")
+                "providerAddress": getattr(t, "providerAddress", ""),
+                "memo": getattr(t, "memo", None),
             }
             for t in resp.transactions
         ],
@@ -229,6 +231,79 @@ def setup_microtransactions_instruction() -> str:
         "3. Log the returned `channelId`. "
         "4. From now on, use `consume_channel` with `channelId` and micro-amounts. "
         "5. Once entirely done, call `settle_channel`."
+    )
+
+@mcp_server.tool()
+def submit_intent(recipient: str, amount: float, memo: Optional[str] = None) -> dict:
+    """
+    Submit an intent-based payment (v2 API). Creates a signed intent token, 
+    submits it through the validation pipeline, and returns a rich result with 
+    compliance metadata (policy limits, daily spend, balance). 
+    Always provide a memo describing why you are making this payment.
+    """
+    client = get_modexia_client()
+    result = client.pay(recipient, amount, memo=memo, wait=True)
+    return {
+        "status": result.status,
+        "intent_id": result.intent_id,
+        "txId": result.txId,
+        "amount": result.amount,
+        "recipient": result.recipient,
+        "wallet_balance_after": result.wallet_balance_after,
+        "daily_spent": result.daily_spent,
+        "daily_remaining": result.daily_remaining,
+        "reason": result.reason,
+        "code": result.code,
+        "suggestion": result.suggestion,
+        "validation": result.validation,
+    }
+
+@mcp_server.tool()
+def get_intent(intent_id: str) -> dict:
+    """Get the status and details of a previously submitted payment intent."""
+    client = get_modexia_client()
+    result = client.get_intent(intent_id)
+    return {
+        "status": result.status,
+        "intent_id": result.intent_id,
+        "txId": result.txId,
+        "amount": result.amount,
+        "recipient": result.recipient,
+        "reason": result.reason,
+        "code": result.code,
+        "validation": result.validation,
+    }
+
+@mcp_server.tool()
+def list_intents(limit: int = 10) -> dict:
+    """List the most recent payment intents with their status and details."""
+    client = get_modexia_client()
+    intents = client.list_intents(limit=limit)
+    return {
+        "intents": [
+            {
+                "intent_id": i.intent_id,
+                "status": i.status,
+                "amount": i.amount,
+                "recipient": i.recipient,
+                "txId": i.txId,
+                "code": i.code,
+            }
+            for i in intents
+        ]
+    }
+
+@mcp_server.prompt()
+def create_intent_payment_instruction() -> str:
+    """Provides guidelines to an agent on how to use the intent-based payment system (v2)."""
+    return (
+        "You are an autonomous financial agent using Modexia's intent-based payment system (v2). "
+        "1. Use `submit_intent` instead of `transfer` for payments — it provides richer compliance feedback. "
+        "2. Always include a descriptive `memo` explaining the reason for the payment. "
+        "3. If the intent is rejected, read the `suggestion` field for actionable advice. "
+        "4. The response includes `daily_spent` and `daily_remaining` — use these to plan ahead. "
+        "5. Use `list_intents` to review your recent payment history and audit trail. "
+        "6. Use `get_intent` to check the status of a specific payment."
     )
 
 

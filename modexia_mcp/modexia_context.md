@@ -46,7 +46,7 @@ sequenceDiagram
 ### 2.2 Future State: Trustless State Channels (EIP-712)
 As the protocol evolves, Modexia will upgrade to **Fully Trustless State Channels**. In this model, the agent environment manages its own private key and signs "Receipts" (micro-payments) directly off-chain using EIP-712 signatures, which the service provider directly submits to the `ModexiaVault` contract. This removes the Modexia backend as a trusted intermediary for off-chain state tracking.
 
-## 3. SDK Capabilities (Python)
+## 3. SDK Capabilities (Python v0.6.1)
 While the MCP server exposes capabilities to the LLM, under the hood it leverages the Modexia Python SDK (`modexiaagentpay`). 
 
 ### Initialization
@@ -55,10 +55,10 @@ Authentication and environment selection are handled intrinsically via the API K
 - `mx_live_...` -> Targets Production (Base Mainnet)
 
 ```python
-from modexia import create_client
+from modexia import ModexiaClient
 
 # The client automatically infers the environment from the key prefix
-client = create_client(api_key="mx_test_12ab...")
+client = ModexiaClient(api_key="mx_test_12ab...")
 ```
 
 ### Core Operations in Detail
