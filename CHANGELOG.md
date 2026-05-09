@@ -1,3 +1,9 @@
+---
+noteId: "df9fa6f04bd711f1ba5939de03e16c35"
+tags: []
+
+---
+
 # Changelog
 
 All notable changes to the Modexia MCP Server (`modexia-mcp`) will be documented in this file.
