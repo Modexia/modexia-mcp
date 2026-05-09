@@ -1,3 +1,9 @@
+---
+noteId: "697a55004bd811f1ba5939de03e16c35"
+tags: []
+
+---
+
 
 
 <div align="center">
@@ -7,8 +13,6 @@
   [![PyPI version](https://badge.fury.io/py/modexia-mcp.svg)](https://badge.fury.io/py/modexia-mcp)
   [![Python version](https://img.shields.io/pypi/pyversions/modexia-mcp.svg)](https://pypi.org/project/modexia-mcp/)
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-  <p><b>Latest PyPI release:</b> v0.2.1 — <a href="https://pypi.org/project/modexia-mcp/0.2.1/">project page</a></p>
 </div>
 
 <br />

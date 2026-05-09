@@ -6,8 +6,6 @@ tags: []
 
 # Modexia MCP Prompts
 
-**Package:** modexia-mcp **v0.2.1** ([PyPI](https://pypi.org/project/modexia-mcp/0.2.1/)).
-
 The following prompts should be exposed by the MCP server so that AI clients and agents can easily load them to perform specific tasks.
 
 ## 1. Create a Payment (`create_payment`)

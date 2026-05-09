@@ -1,7 +1,5 @@
 # 📖 Modexia AgentPay: Deep Context & Developer Guide
 
-**modexia-mcp** (PyPI): **v0.2.1** — [release on PyPI](https://pypi.org/project/modexia-mcp/0.2.1/).
-
 ## 1. Introduction & Overview
 Modexia is a financial infrastructure layer built specifically for **autonomous AI agents**. It bridges the gap between AI development (Python, SDKs, LLM Swarms) and Web3 Smart Contract Accounts (ERC-4337 on the Base Network). 
 

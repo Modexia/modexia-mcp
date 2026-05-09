@@ -432,7 +432,7 @@ wheels = [
 
 [[package]]
 name = "modexia-mcp"
-version = "0.2.1"
+version = "0.2.2"
 source = { editable = "." }
 dependencies = [
     { name = "mcp" },
@@ -444,22 +444,22 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "mcp", specifier = ">=1.26.0" },
-    { name = "modexiaagentpay", specifier = ">=0.5.1" },
+    { name = "modexiaagentpay", specifier = ">=0.6.0" },
     { name = "pydantic", specifier = ">=2.12.5" },
     { name = "python-dotenv", specifier = ">=1.2.2" },
 ]
 
 [[package]]
 name = "modexiaagentpay"
-version = "0.5.1"
+version = "0.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/39/b5/65fffb85b8432613369386d89d8616cb546a988e45b5802dc0e99d43d844/modexiaagentpay-0.5.1.tar.gz", hash = "sha256:a6039070a3c990e230f3ba0234092357e709646f94911d98db10212e5f06c95f", size = 17393, upload-time = "2026-03-19T13:39:19.082Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/08/25/d1b65ed06c75f56f2bfda68b537a0dc206c8a9eb767c436e781bf8809ec6/modexiaagentpay-0.6.0.tar.gz", hash = "sha256:099270d8d88dd7cb812963f2fc7220d30b1bfdf03b2652b70f64b21900a32afc", size = 19756, upload-time = "2026-04-01T22:18:01.185Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/07/9c/678032ebfef0f79a7cb70765ce4d49b8d2663bf59c30b15e53287c4923ee/modexiaagentpay-0.5.1-py3-none-any.whl", hash = "sha256:b0e74b9ecf9dc352028de2eb7c1dc870b23c20b102acc53031048fd936742cf4", size = 18008, upload-time = "2026-03-19T13:39:17.312Z" },
+    { url = "https://files.pythonhosted.org/packages/a4/31/f0514d94632b2088ebbd13b6e05016e0b6be15e52048a0acb8052719314f/modexiaagentpay-0.6.0-py3-none-any.whl", hash = "sha256:65aeaa92a0a1f22bd066c7d936b70f8d3c1956455c69fcec6518f06304d97a54", size = 19345, upload-time = "2026-04-01T22:17:59.884Z" },
 ]
 
 [[package]]
