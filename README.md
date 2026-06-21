@@ -19,7 +19,7 @@ Instead of your agents hitting `402 Payment Required` errors and failing, they c
 
 ---
 
-## What's New in v0.4.0
+## What's New in v0.4.1
 
 **Circle Gateway Nanopayments (x402)**
 This release brings full agentic support for gas-free, sub-cent microtransactions directly to the MCP level.
