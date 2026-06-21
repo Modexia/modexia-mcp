@@ -1,124 +1,117 @@
----
-noteId: "697a55004bd811f1ba5939de03e16c35"
-tags: []
-
----
-
-
-
 <div align="center">
-  <h1>🏦 Modexia AgentPay MCP Server</h1>
+  <img src="https://raw.githubusercontent.com/Modexia/modexia-mcp/main/assets/logo.png" alt="Modexia Logo" width="120" />
+  <h1>Modexia AgentPay MCP Server</h1>
   <p><b>The official Model Context Protocol (MCP) server for autonomous AI Agents to interact with Modexia's crypto infrastructure.</b></p>
   
   [![PyPI version](https://badge.fury.io/py/modexia-mcp.svg)](https://badge.fury.io/py/modexia-mcp)
-  [![Python version](https://img.shields.io/pypi/pyversions/modexia-mcp.svg)](https://pypi.org/project/modexia-mcp/)
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 </div>
 
 <br />
 
-Welcome to the **Modexia MCP Server** (`modexia-mcp`). This server allows your AI agents (like Claude, LangChain bots, or custom swarms) to seamlessly execute secure cryptocurrency transactions (USDC) and zero-fee micro-payments straight from their system prompts.
+Welcome to the **Modexia AgentPay MCP Server** (`modexia-mcp`). This server bridges the gap between Large Language Models and the real-world digital economy.
 
-By connecting this server to an MCP-compatible client, your AI Agent gains a programmatic wallet, enabling it to participate autonomously in the digital economy without requiring complex cryptography inside the LLM context.
+By integrating this standard Model Context Protocol (MCP) server into your AI stack (Claude Desktop, LobeChat, Dify, or custom multi-agent swarms), you instantly equip your AI Agents with a **programmatic Smart Contract Wallet**. 
+
+Instead of your agents hitting `402 Payment Required` errors and failing, they can now autonomously negotiate paywalls, purchase premium data, execute zero-gas microtransactions via Circle Gateway, and trade compute resources with other agents in high-frequency vault channels. 
+
+**Modexia gives your AI a bank account, and MCP gives it the tools to use it.**
 
 ---
 
-## 📋 What's New in v0.3.0
+## What's New in v0.4.0
 
-> **Intent-to-Pay** — AI agents can now make payments through a cryptographically signed intent pipeline with rich compliance feedback, audit trails, and actionable rejection suggestions.
+**Circle Gateway Nanopayments (x402)**
+This release brings full agentic support for gas-free, sub-cent microtransactions directly to the MCP level.
 
-| New Tool | Description |
-|----------|-------------|
-| **`submit_intent`** | Create a signed intent, validate against policies, execute on-chain, and return compliance metadata |
-| **`get_intent`** | Look up the status and details of a previously submitted payment intent |
-| **`list_intents`** | List recent payment intents for audit trail review |
+* `nanopay` — Fetch an x402-protected URL and automatically negotiate the payment using EIP-3009 offline signatures. Includes inline auto-refill logic.
+* `nanopay_activate` — One-time activation for the agent.
+* `nanopay_deposit` / `nanopay_withdraw` — Manage gateway funds directly from the main wallet.
+* `nanopay_balance` — Track the True Available Balance (Gateway deposits minus pending/unsettled signatures).
+* **Structured Error Handling** — The MCP tools now pass back structured `ModexiaPaymentError` codes (e.g., `INSUFFICIENT_MAIN_BALANCE`) so the LLM can reason about failures and take corrective action.
 
-| Updated Tool | What Changed |
+---
+
+## Previous: What's New in v0.3.0 (Intent-to-Pay)
+
+**Intent-Based Payments (v2)**
+Execute standard USDC payments through a strict compliance pipeline with rich feedback.
+
+* `submit_intent` — Create a signed intent, validate against policies, and execute on-chain.
+* `get_intent` / `list_intents` — Audit trail and tracking.
+
+---
+
+## Features
+
+- **Circle Gateway Integration:** Direct programmatic access to Circle's USDC nanopayment infrastructure.
+- **Gas-Free Microtransactions:** Send payments as low as $0.000001 with zero blockchain fees.
+- **EIP-3009 Offline Signatures:** Secure, off-chain payment authorizations that prevent double-spending.
+- **Intent-Based Routing:** Strict policy enforcement, daily spend limits, and cryptographic audit trails.
+- **Automated Paywall Negotiation:** Automatically detect `402 Payment Required` headers and fulfill them inline.
+- **Smart Auto-Refill:** Seamlessly top-up gateway balances from the main wallet when funds run low.
+
+---
+
+## Exposed MCP Components
+
+### Tools
+
+| Tool Name | Description |
+|-----------|-------------|
+| `nanopay` | Auto-negotiate and pay for `402 Payment Required` URLs using EIP-3009 offline signatures. |
+| `nanopay_activate` | One-time activation command to enable Circle Gateway nanopayments for the agent. |
+| `nanopay_deposit` | Deposit funds from the main agent wallet to the nanopayment Gateway. |
+| `nanopay_withdraw` | Withdraw unused funds from the Gateway back to the main wallet. |
+| `nanopay_balance` | Check the True Available Balance (Gateway deposits minus pending signatures). |
+| `submit_intent` | Execute a standard USDC payment with compliance and policy enforcement. |
+| `get_intent` | Retrieve the status and compliance metadata of a previously submitted payment intent. |
+| `list_intents` | Fetch recent payment intents for audit trail review. |
+| `open_channel` | Lock funds into a smart contract for high-frequency micro-transactions. |
+| `consume_channel` | Execute instant, gas-free micro-payments inside an open channel. |
+| `settle_channel` | Close the vault and distribute funds on-chain. |
+| `get_channel` | Check the current capacity and state of a specific payment channel. |
+| `list_channels` | List all payment channels associated with the agent's wallet. |
+| `get_balance` | Retrieve the current USDC balance of the agent's primary Smart Contract Wallet. |
+| `get_history` | Fetch the recent transaction history for the agent. |
+| `transfer` | Execute a standard synchronous USDC transfer (v1). |
+| `cross_chain_transfer` | Execute a cross-chain CCTP payment via Squid Router (e.g., Ethereum -> Akash). |
+| `smart_fetch` | Legacy HTTP auto-negotiation for HTTP-based Paywalls. |
+
+### Prompts
+
+| Prompt Name | Description |
+|-------------|-------------|
+| `nanopay_usage_instruction` | Best practices for funding the gateway and executing `nanopay` operations. |
+| `create_intent_payment_instruction` | Rules for structuring compliant payments, adding memos, and handling policy rejections. |
+| `setup_microtransactions_instruction` | Step-by-step guide on opening, consuming, and settling vault channels. |
+| `create_payment_instruction` | Standard rules for legacy idempotency-based transfers. |
+
+### Resources
+
+| Resource URI | Description |
 |--------------|-------------|
-| **`transfer`** | Now accepts an optional `memo` parameter for audit trail visibility |
-| **`get_history`** | Now surfaces the `memo` field on each transaction |
-
-| New Prompt | Description |
-|------------|-------------|
-| **`create_intent_payment_instruction`** | Guides agents on using the v2 intent workflow |
+| `modexia://docs/llms_context` | The complete Modexia Developer Protocol Guide with overarching economic rules for swarms. |
 
 ---
 
-## 🌟 Getting Started: Your API Key
+## Configuration & Setup
 
-Before writing your first integration, you will need a Modexia developer account and an API key. 
+This server requires a Modexia API Key to function. You can obtain one by creating a developer account at [modexia.software](https://modexia.software).
 
-1. **Visit [modexia.software](https://modexia.software)**
-2. Create or log into your developer account.
-3. Navigate to your dashboard and generate your **API Key**.
+| Variable | Description |
+|----------|-------------|
+| `MODEXIA_API_KEY` | **Required.** Your Modexia developer key (e.g. `mx_test_...`) |
+| `MODEXIA_BASE_URL` | Optional. Overrides the API endpoint. Defaults to the Sandbox Environment. |
 
----
-
-## 🏗 System Architecture & Flow
-
-This server acts as a secure, local bridge between your AI agent's reasoning engine and the Modexia blockchain network via the Python SDK.
-
-### Intent-to-Pay Flow (v0.3.0 — Recommended)
-
-```mermaid
-sequenceDiagram
-    participant LLM as 🤖 AI Agent (Claude/Custom)
-    participant MCP as 🔌 Modexia MCP Server
-    participant SDK as 📦 Python SDK
-    participant API as 🌐 Modexia API
-    participant Pipeline as 🔒 Validation Pipeline
-    participant Chain as ⛓️ Blockchain
-
-    LLM->>MCP: submit_intent(recipient, amount, memo="Paying for data")
-    MCP->>SDK: client.pay(recipient, amount, memo)
-    SDK->>SDK: Create intent JSON + HMAC-SHA256 sign
-    SDK->>API: POST /v2/intents/submit
-    API->>Pipeline: Run 11-step validation
-
-    Note over Pipeline: amount ✓ recipient ✓ expiry ✓<br/>nonce ✓ wallet ✓ KYC ✓<br/>SBT ✓ policy ✓ limits ✓
-
-    alt All checks pass
-        Pipeline-->>API: approved
-        API->>Chain: Execute on-chain transfer
-        Chain-->>API: txId
-        API-->>SDK: IntentResult(executed)
-        SDK-->>MCP: Rich compliance metadata
-        MCP-->>LLM: "Payment executed! TxID: 0x123...<br/>Daily remaining: $95.00"
-    else Policy violation
-        Pipeline-->>API: rejected
-        API-->>SDK: IntentResult(rejected, suggestion)
-        SDK-->>MCP: Rejection with fix suggestion
-        MCP-->>LLM: "Rejected: Exceeds daily limit.<br/>Suggestion: Try again tomorrow."
-    end
+### Using `uvx` (Recommended)
+You can run this server directly in any MCP client that supports standard executable commands:
+```bash
+uvx modexia-mcp
 ```
 
-### Classic Transfer Flow (Still Supported)
-
-```mermaid
-sequenceDiagram
-    participant LLM as 🤖 AI Agent
-    participant MCP as 🔌 MCP Server
-    participant SDK as 📦 Python SDK
-    participant API as 🌐 Modexia Network
-
-    LLM->>MCP: transfer(recipient, amount, memo="...")
-    MCP->>SDK: client.transfer(...)
-    SDK->>API: POST /v1/agent/pay
-    Note over API: Internally validates via<br/>same intent pipeline
-    API-->>SDK: {success, txId}
-    SDK-->>MCP: PaymentReceipt
-    MCP-->>LLM: "Success! TxID: 0x123..."
-```
-
----
-
-## 📦 Installation & Setup
-
-Because this server is deployed and maintained natively on **PyPI**, you do not need to clone the repository to use it. Your MCP-compatible client will automatically download and execute it in an isolated, secure environment via `uvx`.
-
-### Using Claude Desktop
-If you are using Anthropic's Claude Desktop App, simply add this configuration to your `claude_desktop_config.json`:
-
+### Claude Desktop
+To use Modexia with Claude Desktop, add the following to your `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
@@ -133,118 +126,23 @@ If you are using Anthropic's Claude Desktop App, simply add this configuration t
 }
 ```
 
-> **Note on Environments:** 
-> If you do not specify a `MODEXIA_BASE_URL` in the `env` block, the server defaults to the **Sandbox (Testnet)**. To execute real money transactions in production, you must add `"MODEXIA_BASE_URL": "https://api.modexia.software"` and provide an `mx_live_` prefix key.
+---
+
+## Contributing to Open Source
+
+We actively welcome community contributions to make this MCP server even better. Because it acts as the primary interface for autonomous AI agents, we heavily prioritize stability and strict prompt engineering.
+
+1. **Clone the Repo:** `git clone https://github.com/Modexia/modexia-mcp.git`
+2. **Install Dependencies:** `pip install -e .`
+3. **Run Locally:** You can run the server in stdio mode for local testing via `python -m modexia_mcp`
+4. **Submit PRs:** Open a Pull Request targeting the `main` branch.
 
 ---
 
-## ✨ Comprehensive Tool Reference
+## Security Model
+The Modexia MCP Server **never** exposes your private keys to the LLM context. The AI only has permission to trigger explicitly configured MCP tools. Policy limits (e.g., maximum daily spend, hourly caps) are enforced automatically on the Modexia backend. Even a hallucinating AI cannot drain your wallet above your predefined guards.
 
-Once connected, your AI Agent natively understands how to use all of the following capabilities. The LLM handles the logic and idempotency; the MCP handles the secure execution.
+## License & Support
+**modexia-mcp** is an open-source tool governed by the [MIT License](LICENSE). 
 
-### 🆕 Intent-Based Payments (v0.3.0)
-
-The new recommended way for agents to make payments. Provides rich compliance feedback, daily spend tracking, and actionable suggestions on rejection.
-
-#### `submit_intent(recipient, amount, memo=None)`
-Submit an intent-based payment through the validation pipeline. Returns:
-- `status` — `"executed"`, `"rejected"`, or `"failed"`
-- `intent_id` — UUID for tracking
-- `txId` — Transaction ID (on success)
-- `wallet_balance_after` — Balance after payment
-- `daily_spent` / `daily_remaining` — Policy spending metadata
-- `reason` / `code` / `suggestion` — Actionable feedback on rejection
-- `validation` — Per-step pipeline results
-
-**Example agent interaction:**
-```
-Agent: "Pay 0xAlice $5 for the API call she provided."
-→ submit_intent(recipient="0xAlice", amount=5.0, memo="Payment for weather API response")
-← {status: "executed", txId: "abc123", daily_remaining: "95.00", wallet_balance_after: "245.00"}
-Agent: "Payment complete! I spent $5, leaving $95 in today's budget."
-```
-
-**Rejection example:**
-```
-Agent: "Pay 0xBob $500 for premium data."
-→ submit_intent(recipient="0xBob", amount=500.0, memo="Premium dataset purchase")
-← {status: "rejected", code: "POLICY_PER_REQUEST", suggestion: "Reduce the payment amount or request a higher per-request limit"}
-Agent: "I can't make this payment — it exceeds my per-request limit. You may need to increase the limit in the dashboard."
-```
-
-#### `get_intent(intent_id)`
-Look up the status and details of a previously submitted intent.
-
-#### `list_intents(limit=10)`
-List the most recent payment intents. Useful for agent memory and audit trail review.
-
----
-
-### Standard Payments & Account Info
-- `get_balance()`: Fetches the current USDC balance of the Agent's Smart Contract Wallet. Agents use this as a pre-flight check.
-- `transfer(recipient, amount, idempotency_key=None, memo=None)`: Sends a standard Modexia payment (USDC). Now accepts a `memo` for audit trail.
-- `cross_chain_transfer(to_chain, to_token, recipient, amount)`: Cross-chain CCTP transfer via Squid Router.
-- `get_history(limit=5)`: Allows the AI agent to introspect its own recent expenditures. Now surfaces `memo` per transaction.
-
-### High-Frequency Vault Channels
-Vault channels allow your agent to execute thousands of micro-transactions per second with **zero gas fees** and **zero latency**.
-
-```mermaid
-stateDiagram-v2
-    [*] --> Closed
-    Closed --> Open: open_channel() (Locks USDC deposit On-Chain)
-    Open --> Active: consume_channel() (Instant Off-Chain Micro-payment)
-    Active --> Active: consume_channel()
-    Active --> Settling: settle_channel()
-    Open --> Settling: settle_channel() (Refunds remaining)
-    Settling --> Closed: Final Payout On-Chain
-```
-
-- `open_channel(provider_address, deposit_amount, duration_hours)`: Locks the requested deposit into a ModexiaVault smart contract. Returns a unique `channelId`.
-- `consume_channel(channel_id, amount)`: Executes an instant, cryptographically signed micro-payment inside the open channel. 
-- `settle_channel(channel_id)`: Closes the vault, distributes the final payout to the provider, and refunds the unused deposit back to the agent.
-- `get_channel(channel_id)`: Checks the remaining balance and expiration.
-- `list_channels(limit=50)`: Finds existing open channels to reuse.
-
-### Autonomous API Negotiation
-#### `smart_fetch(url, ...)`
-This is the hallmark tool of the Modexia MCP. It allows an AI agent to fetch any external URL endpoint and automatically negotiate payments.
-1. The tool intercepts the HTTP `402 Payment Required`.
-2. Parses the `WWW-Authenticate` header to extract the requested invoice.
-3. Silently executes a Modexia payment to fulfill the invoice.
-4. Retries the original HTTP GET request with the cryptographic proof-of-payment.
-5. Returns the premium data directly to the LLM context.
-
----
-
-## 📝 Prompts
-
-The server includes built-in prompts to guide agents on best practices:
-
-| Prompt | Purpose |
-|--------|---------|
-| `create_payment_instruction` | Guidelines for making standard payments (check balance, use idempotency keys) |
-| `setup_microtransactions_instruction` | Guidelines for opening and using vault channels |
-| `create_intent_payment_instruction` | **New.** Guidelines for using the v2 intent system (prefer `submit_intent`, always include memo, read suggestions) |
-
----
-
-## 🔐 Security Model & Best Practices
-
-The Modexia MCP Server never exposes your private keys to the LLM context. The AI only has permission to trigger explicitly configured MCP tools.
-
-**Intent-to-Pay Security (v0.3.0):**
-- All intents are **HMAC-SHA256 signed** using the API key — tamper-proof
-- **Replay protection** via nonce uniqueness enforcement
-- **Expiry validation** — intents expire after 5 minutes by default
-- **Token size limit** — 10KB max to prevent DoS
-- **Memo truncation** — 500 characters max to prevent DB bloat
-
-**Policy limits** (like maximum daily spend, hourly limits, or per-request caps) are enforced automatically on the backend, meaning even a hallucinating AI cannot drain your wallet above your predefined guards.
-
----
-
-## 📄 License & Support
-**modexia-mcp** is an open-source tool governed by the [MIT License](LICENSE).
-
-Need help scaling your agent swarm? Reach out to our engineering team or explore the overarching protocol docs at [modexia.software](https://modexia.software).
+Need help scaling your agent swarm or configuring your API keys? Access your developer dashboard and explore the docs at [modexia.software](https://modexia.software).

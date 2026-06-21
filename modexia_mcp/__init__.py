@@ -7,9 +7,10 @@ import sys
 
 # We suppress import errors in case modexiaagentpay isn't fully installed yet.
 try:
-    from modexia import ModexiaClient
+    from modexia import ModexiaClient, ModexiaPaymentError
 except ImportError:
     ModexiaClient = None
+    ModexiaPaymentError = None
 
 load_dotenv()
 
@@ -212,26 +213,22 @@ def get_modexia_context() -> str:
 @mcp_server.prompt()
 def create_payment_instruction() -> str:
     """Provides internal guidelines to an agent on how to correctly structure a standard payment with Modexia."""
-    return (
-        "You are an autonomous financial agent utilizing the Modexia MCP Server. "
-        "Before proceeding with a payment, run `get_balance` to ensure sufficient funds (+1% fee). "
-        "1. Generate a unique idempotency key based on your task ID. "
-        "2. Call `transfer` with the recipient address, amount, and idempotency key. "
-        "3. Wait for the transaction and report success. "
-        "Do NOT try to acquire ETH. Gas is sponsored by Modexia."
-    )
+    file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prompts", "create_payment_instruction.md")
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception:
+        return ""
 
 @mcp_server.prompt()
 def setup_microtransactions_instruction() -> str:
     """Provides internal guidelines to an agent on how to securely open and use a micro-payment channel."""
-    return (
-        "You need to establish a high-frequency payment channel using Modexia. "
-        "1. `get_balance` to verify deposit is available. "
-        "2. Call `open_channel` to lock the deposit into a ModexiaVault for the provider. "
-        "3. Log the returned `channelId`. "
-        "4. From now on, use `consume_channel` with `channelId` and micro-amounts. "
-        "5. Once entirely done, call `settle_channel`."
-    )
+    file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prompts", "setup_microtransactions_instruction.md")
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception:
+        return ""
 
 @mcp_server.tool()
 def submit_intent(recipient: str, amount: float, memo: Optional[str] = None) -> dict:
@@ -296,15 +293,99 @@ def list_intents(limit: int = 10) -> dict:
 @mcp_server.prompt()
 def create_intent_payment_instruction() -> str:
     """Provides guidelines to an agent on how to use the intent-based payment system (v2)."""
-    return (
-        "You are an autonomous financial agent using Modexia's intent-based payment system (v2). "
-        "1. Use `submit_intent` instead of `transfer` for payments — it provides richer compliance feedback. "
-        "2. Always include a descriptive `memo` explaining the reason for the payment. "
-        "3. If the intent is rejected, read the `suggestion` field for actionable advice. "
-        "4. The response includes `daily_spent` and `daily_remaining` — use these to plan ahead. "
-        "5. Use `list_intents` to review your recent payment history and audit trail. "
-        "6. Use `get_intent` to check the status of a specific payment."
-    )
+    file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prompts", "create_intent_payment_instruction.md")
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception:
+        return ""
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  NANOPAY — Circle Gateway Nanopayments (x402)
+# ═══════════════════════════════════════════════════════════════════
+
+@mcp_server.tool()
+def nanopay(url: str, method: str = "GET") -> dict:
+    """
+    Fetch an x402-protected resource and automatically pay using Circle Gateway
+    nanopayments. Gas-free, instant, supports payments as low as $0.000001 USDC.
+    Use this for sub-cent API calls and premium data purchases.
+    """
+    client = get_modexia_client()
+    try:
+        result = client.nanopay(url, method)
+        return {
+            "success": result.success,
+            "status_code": result.status_code,
+            "data": result.data,
+            "amount_paid": result.amount_paid,
+            "signature": getattr(result, "signature", None),
+        }
+    except ModexiaPaymentError as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "code": getattr(e, "code", None),
+            "details": getattr(e, "details", {}),
+        }
+
+@mcp_server.tool()
+def nanopay_balance() -> dict:
+    """Get the agent's Circle Gateway nanopayment balance (separate from main wallet balance)."""
+    client = get_modexia_client()
+    balance = client.nanopay_balance()
+    return {
+        "available": balance.available,
+        "total": balance.total,
+        "withdrawing": balance.withdrawing,
+        "auto_refill_enabled": balance.auto_refill_enabled,
+    }
+
+@mcp_server.tool()
+def nanopay_deposit(amount: float) -> dict:
+    """
+    Deposit USDC from the agent's main wallet into the nanopayment Gateway.
+    This is an on-chain transaction. After depositing, nanopayments are gas-free.
+    """
+    client = get_modexia_client()
+    result = client.nanopay_deposit(amount)
+    return {
+        "success": result.success,
+        "deposit_tx_id": result.deposit_tx_id,
+        "amount": result.amount,
+    }
+
+@mcp_server.tool()
+def nanopay_withdraw(amount: float) -> dict:
+    """Withdraw USDC from the nanopayment Gateway back to the agent's main wallet."""
+    client = get_modexia_client()
+    result = client.nanopay_withdraw(amount)
+    return {
+        "success": result.success,
+        "withdraw_tx_id": result.withdraw_tx_id,
+        "amount": result.amount,
+    }
+
+@mcp_server.tool()
+def nanopay_activate() -> dict:
+    """
+    Enable Circle Gateway nanopayments for this agent.
+    Must be called once before using nanopay, nanopay_deposit, or nanopay_balance.
+    Idempotent — calling again returns the existing activation.
+    """
+    client = get_modexia_client()
+    return client.nanopay_activate()
+
+@mcp_server.prompt()
+def nanopay_usage_instruction() -> str:
+    """Provides guidelines on how to use Circle Gateway nanopayments."""
+    file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prompts", "nanopay_usage_instruction.md")
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception:
+        return ""
 
 
 def main():
