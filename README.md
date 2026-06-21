@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/Modexia/modexia-mcp/main/assets/logo.png" alt="Modexia Logo" width="120" />
+  <img src="assets/modexialogo.png" alt="Modexia Logo" width="120" style="border-radius: 20px; margin-bottom: 20px;" />
   <h1>Modexia AgentPay MCP Server</h1>
   <p><b>The official Model Context Protocol (MCP) server for autonomous AI Agents to interact with Modexia's crypto infrastructure.</b></p>
   

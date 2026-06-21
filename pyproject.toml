@@ -32,6 +32,3 @@ Documentation = "https://modexia.software/docs"
 [project.scripts]
 modexia-mcp = "modexia_mcp:main"
 
-[tool.hatch.build.targets.wheel.force-include]
-"modexia_mcp/modexia_context.md" = "modexia_mcp/modexia_context.md"
-"modexia_mcp/prompts" = "modexia_mcp/prompts"
