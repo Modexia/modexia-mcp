@@ -6,7 +6,7 @@
   [![PyPI version](https://badge.fury.io/py/modexia-mcp.svg)](https://badge.fury.io/py/modexia-mcp)
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 </div>
-[![MCP Badge](https://lobehub.com/badge/mcp/modexia-modexia-mcp)](https://lobehub.com/mcp/modexia-modexia-mcp)
+[![MCP Badge](https://lobehub.com/badge/mcp-full/modexia-modexia-mcp?theme=light)](https://lobehub.com/mcp/modexia-modexia-mcp)
 
 <br />
 
