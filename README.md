@@ -1,3 +1,46 @@
+---
+name: modexia-mcp
+version: 0.4.1
+description: The official Model Context Protocol (MCP) server for autonomous AI Agents to interact with Modexia's crypto infrastructure.
+author: Modexia
+homepage: https://github.com/Modexia/ModexiaAgentpay
+tags:
+  - mcp
+  - web3
+  - payments
+avatar: https://raw.githubusercontent.com/Modexia/ModexiaAgentpay/main/apps/mcp-server/assets/modexialogo.png
+config:
+  type: stdio
+  command: uvx
+  args:
+    - modexia-mcp
+skills:
+  - nanopay
+  - nanopay_activate
+  - nanopay_deposit
+  - nanopay_withdraw
+  - nanopay_balance
+  - submit_intent
+  - get_intent
+  - list_intents
+  - open_channel
+  - consume_channel
+  - settle_channel
+  - get_channel
+  - list_channels
+  - get_balance
+  - get_history
+  - transfer
+  - cross_chain_transfer
+  - smart_fetch
+prompts:
+  - nanopay_usage_instruction
+  - create_intent_payment_instruction
+  - setup_microtransactions_instruction
+  - create_payment_instruction
+resources:
+  - modexia://docs/llms_context
+---
 <div align="center">
   <img src="assets/modexialogo.png" alt="Modexia Logo" width="120" style="border-radius: 20px; margin-bottom: 20px;" />
   <h1>Modexia AgentPay MCP Server</h1>
